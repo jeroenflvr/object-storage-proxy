@@ -1,18 +1,17 @@
-
 use async_trait::async_trait;
-use http::uri::Authority;
 use http::Uri;
+use http::uri::Authority;
 
-use tokio::runtime::Runtime;
 use std::env;
 use std::sync::Mutex;
+use tokio::runtime::Runtime;
 
-use pingora::server::configuration::Opt;
-use pingora::server::Server;
-use pingora::upstreams::peer::HttpPeer;
+use dotenv::dotenv;
 use pingora::Result;
 use pingora::proxy::{ProxyHttp, Session};
-use dotenv::dotenv;
+use pingora::server::Server;
+use pingora::server::configuration::Opt;
+use pingora::upstreams::peer::HttpPeer;
 
 pub mod parsers;
 use parsers::path::parse_path;
@@ -21,9 +20,8 @@ pub mod utils;
 use utils::creds::get_bearer;
 
 use pyo3::prelude::*;
-use pyo3::wrap_pyfunction;
 use pyo3::types::PyModule;
-
+use pyo3::wrap_pyfunction;
 
 // global counter
 static REQ_COUNTER: Mutex<usize> = Mutex::new(0);
@@ -37,14 +35,13 @@ pub struct MyCtx {
     bearer_token: String,
 }
 
-
 #[async_trait]
 impl ProxyHttp for MyProxy {
     type CTX = MyCtx;
     fn new_ctx(&self) -> Self::CTX {
-        MyCtx { 
+        MyCtx {
             bearer_token: self.bearer_token.clone(),
-         }
+        }
     }
 
     async fn upstream_peer(
@@ -87,7 +84,6 @@ impl ProxyHttp for MyProxy {
             _ => String::new(),
         };
 
-
         let endpoint = format!("{}.{}", bucket, self.cos_endpoint);
 
         // Box:leak the temporary string to get a static reference which will outlive the function
@@ -103,18 +99,13 @@ impl ProxyHttp for MyProxy {
                         .clone(),
                 )
                 .scheme(upstream_request.uri.scheme_str().unwrap_or("https"))
-                .path_and_query(
-                    my_updated_url.to_owned() + (&my_query),
-                )
+                .path_and_query(my_updated_url.to_owned() + (&my_query))
                 .build()
                 .unwrap(),
         );
 
-
-        upstream_request
-            .insert_header("host", endpoint.to_owned())?;
-        upstream_request
-            .insert_header("Authorization", format!("Bearer {}", _ctx.bearer_token))?;
+        upstream_request.insert_header("host", endpoint.to_owned())?;
+        upstream_request.insert_header("Authorization", format!("Bearer {}", _ctx.bearer_token))?;
         dbg!(&upstream_request.headers);
         dbg!(&upstream_request.uri);
         Ok(())
@@ -127,7 +118,6 @@ pub fn start_server() {
     let api_key = env::var("COS_API_KEY").expect("COS_API_KEY environment variable not set");
     let port = env::var("PORT").unwrap_or_else(|_| "6190".to_string());
     println!("Starting server on port: {port}");
-
 
     let rt = Runtime::new().expect("Failed to create Tokio runtime");
 
@@ -157,7 +147,6 @@ pub fn start_server() {
     my_server.add_service(my_proxy);
     my_server.run_forever();
 }
-
 
 // #[pyfunction]
 // fn start_server_py() -> PyResult<()> {

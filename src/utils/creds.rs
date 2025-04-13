@@ -7,16 +7,16 @@ struct IamResponse {
     // add expiration etc
 }
 
-
 pub(crate) async fn get_bearer(api_key: String) -> Result<String, Box<dyn std::error::Error>> {
     let client = Client::new();
 
     let params = [
         ("grant_type", "urn:ibm:params:oauth:grant-type:apikey"),
-        ("apikey", &api_key)
+        ("apikey", &api_key),
     ];
 
-    let resp = client.post("https://iam.cloud.ibm.com/identity/token")
+    let resp = client
+        .post("https://iam.cloud.ibm.com/identity/token")
         .header("Content-Type", "application/x-www-form-urlencoded")
         .form(&params)
         .send()
@@ -26,23 +26,24 @@ pub(crate) async fn get_bearer(api_key: String) -> Result<String, Box<dyn std::e
         println!("Response: {:?}", resp);
         let iam_response: IamResponse = resp.json().await?;
         println!("Received access token: {}", iam_response.access_token);
-        return Ok(iam_response.access_token)
-
+        Ok(iam_response.access_token)
     } else {
         let err_text = resp.text().await?;
         eprintln!("Failed to get token: {}", err_text);
-        return Err(format!("Failed to get token: {}", err_text).into());
+        Err(format!("Failed to get token: {}", err_text).into())
     }
-
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wiremock::{MockServer, Mock, ResponseTemplate};
     use wiremock::matchers::{method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
-    async fn get_bearer_with_mock_url(api_key: String, mock_url: &str) -> Result<String, Box<dyn std::error::Error>> {
+    async fn get_bearer_with_mock_url(
+        api_key: String,
+        mock_url: &str,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let client = Client::new();
 
         let params = [
@@ -50,7 +51,8 @@ mod tests {
             ("apikey", &api_key),
         ];
 
-        let resp = client.post(format!("{}/identity/token", mock_url))
+        let resp = client
+            .post(format!("{}/identity/token", mock_url))
             .header("Content-Type", "application/x-www-form-urlencoded")
             .form(&params)
             .send()
@@ -75,7 +77,9 @@ mod tests {
 
         Mock::given(method("POST"))
             .and(path("/identity/token"))
-            .respond_with(ResponseTemplate::new(200).set_body_raw(response_body, "application/json"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_raw(response_body, "application/json"),
+            )
             .mount(&mock_server)
             .await;
 
@@ -116,7 +120,9 @@ mod tests {
 
         Mock::given(method("POST"))
             .and(path("/identity/token"))
-            .respond_with(ResponseTemplate::new(200).set_body_raw(invalid_response_body, "application/json"))
+            .respond_with(
+                ResponseTemplate::new(200).set_body_raw(invalid_response_body, "application/json"),
+            )
             .mount(&mock_server)
             .await;
 
@@ -128,7 +134,8 @@ mod tests {
         if let Err(err) = result {
             let err_message = err.to_string();
             assert!(
-                err_message.contains("missing field `access_token`") || err_message.contains("error decoding response body"),
+                err_message.contains("missing field `access_token`")
+                    || err_message.contains("error decoding response body"),
                 "Unexpected error message: {}",
                 err_message
             );

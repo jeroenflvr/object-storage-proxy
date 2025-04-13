@@ -1,11 +1,10 @@
 use nom::{
-    IResult,
-    Parser,
+    IResult, Parser,
+    branch::alt,
+    bytes::complete::take_while1,
     character::complete::char,
     combinator::{eof, map, rest},
     sequence::preceded,
-    branch::alt,
-    bytes::complete::take_while1,
 };
 
 pub(crate) fn parse_path(input: &str) -> IResult<&str, (&str, &str)> {
@@ -13,10 +12,11 @@ pub(crate) fn parse_path(input: &str) -> IResult<&str, (&str, &str)> {
         char('/'),
         take_while1(|c| c != '/'), // bucket
         alt((
-            preceded(char('/'), rest),         // rest of the path
-            map(eof, |_| ""),                  // no path after bucket
+            preceded(char('/'), rest), // rest of the path
+            map(eof, |_| ""),          // no path after bucket
         )),
-    ).parse(input)?;
+    )
+        .parse(input)?;
 
     let rest_path = if rest.is_empty() {
         "/"
@@ -27,7 +27,6 @@ pub(crate) fn parse_path(input: &str) -> IResult<&str, (&str, &str)> {
 
     Ok(("", (bucket, rest_path)))
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -86,6 +85,9 @@ mod tests {
     fn test_parse_path_with_special_characters_in_path() {
         let input = "/bucket_name/some/path-with_special.chars";
         let result = parse_path(input);
-        assert_eq!(result, Ok(("", ("bucket_name", "/some/path-with_special.chars"))));
+        assert_eq!(
+            result,
+            Ok(("", ("bucket_name", "/some/path-with_special.chars")))
+        );
     }
 }
