@@ -8,8 +8,6 @@ use nom::{
     bytes::complete::take_while1,
 };
 
-
-
 pub(crate) fn parse_path(input: &str) -> IResult<&str, (&str, &str)> {
     let (_remaining, (_, bucket, rest)) = (
         char('/'),
@@ -28,4 +26,66 @@ pub(crate) fn parse_path(input: &str) -> IResult<&str, (&str, &str)> {
     };
 
     Ok(("", (bucket, rest_path)))
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_path_with_bucket_and_path() {
+        let input = "/bucket_name/some/path";
+        let result = parse_path(input);
+        assert_eq!(result, Ok(("", ("bucket_name", "/some/path"))));
+    }
+
+    #[test]
+    fn test_parse_path_with_bucket_only() {
+        let input = "/bucket_name";
+        let result = parse_path(input);
+        assert_eq!(result, Ok(("", ("bucket_name", "/"))));
+    }
+
+    #[test]
+    fn test_parse_path_with_empty_input() {
+        let input = "";
+        let result = parse_path(input);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_path_with_no_leading_slash() {
+        let input = "bucket_name/some/path";
+        let result = parse_path(input);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_path_with_trailing_slash() {
+        let input = "/bucket_name/";
+        let result = parse_path(input);
+        assert_eq!(result, Ok(("", ("bucket_name", "/"))));
+    }
+
+    #[test]
+    fn test_parse_path_with_multiple_slashes_in_path() {
+        let input = "/bucket_name/some//path";
+        let result = parse_path(input);
+        assert_eq!(result, Ok(("", ("bucket_name", "/some//path"))));
+    }
+
+    #[test]
+    fn test_parse_path_with_special_characters_in_bucket() {
+        let input = "/bucket-name_123/some/path";
+        let result = parse_path(input);
+        assert_eq!(result, Ok(("", ("bucket-name_123", "/some/path"))));
+    }
+
+    #[test]
+    fn test_parse_path_with_special_characters_in_path() {
+        let input = "/bucket_name/some/path-with_special.chars";
+        let result = parse_path(input);
+        assert_eq!(result, Ok(("", ("bucket_name", "/some/path-with_special.chars"))));
+    }
 }
