@@ -152,13 +152,13 @@ impl ProxyHttp for MyProxy {
         upstream_request: &mut pingora::http::RequestHeader,
         _ctx: &mut Self::CTX,
     ) -> Result<()> {
-        dbg!(&upstream_request.headers);
-        dbg!(&upstream_request.uri);
+        // dbg!(&upstream_request.headers);
+        // dbg!(&upstream_request.uri);
 
         let (_, (bucket, my_updated_url)) = parse_path(upstream_request.uri.path()).unwrap();
 
-        dbg!(&bucket);
-        dbg!(&my_updated_url);
+        // dbg!(&bucket);
+        // dbg!(&my_updated_url);
 
         let my_query = match upstream_request.uri.query() {
             Some(q) if !q.is_empty() => format!("?{}", q),
@@ -193,8 +193,7 @@ impl ProxyHttp for MyProxy {
             .insert_header("host", endpoint.to_owned())?;
         upstream_request
             .insert_header("Authorization", format!("Bearer {}", _ctx.bearer_token))?;
-        dbg!(&upstream_request.headers);
-        dbg!(&upstream_request.uri);
+        // dbg!(&upstream_request.uri);
         Ok(())
     }
 }
