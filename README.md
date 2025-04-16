@@ -83,9 +83,8 @@ Pass in a function which maps bucket to instance (credentials), and a function t
 # Status
 
 - [x] pingora proxy implementation
-- [ ] pass in credentials handler
-- [ ] pass in endpoint builder
+- [x] pass in credentials handler
 - [ ] cache credentials
-- [ ] pass in bucket/instance and bucket/port config
-- [ ] split in workspace crate with core, cli and python crates
+- [x] pass in bucket/instance and bucket/port config
+- [x] <del>split in workspace crate with core, cli and python crates</del> (too many specifics for python)
 - [ ] config mgmt
