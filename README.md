@@ -78,7 +78,7 @@ Pass in a function which maps bucket to instance (credentials), and a function t
      ┌───┴──┐           ┌──────┴─────┐                                              ┌─────┴─────┐          ┌───┴───┐
      │Client│           │ReverseProxy│                                              │IAM_Service│          │IBM_COS│
      └──────┘           └────────────┘                                              └───────────┘          └───────┘
-     ```
+```
 
 # Status
 
