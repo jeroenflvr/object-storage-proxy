@@ -10,10 +10,10 @@ use nom::{
 pub(crate) fn parse_path(input: &str) -> IResult<&str, (&str, &str)> {
     let (_remaining, (_, bucket, rest)) = (
         char('/'),
-        take_while1(|c| c != '/'), // bucket
+        take_while1(|c| c != '/'),
         alt((
-            preceded(char('/'), rest), // rest of the path
-            map(eof, |_| ""),          // no path after bucket
+            preceded(char('/'), rest),
+            map(eof, |_| ""),
         )),
     )
         .parse(input)?;
