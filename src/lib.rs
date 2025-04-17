@@ -59,14 +59,14 @@ pub struct CosMapItem {
     pub region: String,
     pub port: u16,
     pub instance: String,
-    pub api_key: String,
+    pub api_key: Option<String>,
 }
 
 
 
 fn parse_cos_map(py: Python, cos_dict: &PyObject) -> PyResult<HashMap<String, CosMapItem>> {
     let mut cos_map: HashMap<String, CosMapItem> = HashMap::new();
-    let cos_tuples: Result<Vec<(String, String, u16, String, String)>, PyErr> = cos_dict.extract(py);
+    let cos_tuples: Result<Vec<(String, String, u16, String, Option<String>)>, PyErr> = cos_dict.extract(py);
 
     match cos_tuples {
         Ok(cos_tuples) => {
@@ -75,7 +75,7 @@ fn parse_cos_map(py: Python, cos_dict: &PyObject) -> PyResult<HashMap<String, Co
                 let instance = instance.to_string();
                 let port = port;
                 let bucket = bucket.to_string();
-                let api_key = api_key.to_string();
+                let api_key = api_key.map(|s| s.to_string());
 
                 cos_map.insert(
                     bucket.clone(),
@@ -161,6 +161,8 @@ impl ProxyHttp for MyProxy {
 
         let (_, (bucket, my_updated_url)) = parse_path(upstream_request.uri.path()).unwrap();
 
+        let hdr_bucket = bucket.to_string();
+
         // dbg!(&bucket);
         // dbg!(&my_updated_url);
 
@@ -195,6 +197,10 @@ impl ProxyHttp for MyProxy {
 
         upstream_request
             .insert_header("host", endpoint.to_owned())?;
+
+        // todo: call the bearer token fetcher
+        println!("need to call the bearer token fetcher for bucket: {}", hdr_bucket);
+        
         upstream_request
             .insert_header("Authorization", format!("Bearer {}", _ctx.bearer_token))?;
         // dbg!(&upstream_request.uri);
@@ -205,7 +211,7 @@ impl ProxyHttp for MyProxy {
 pub fn run_server(py: Python, run_args: &ProxyServerConfig) {
     dbg!(run_args);
 
-    let _d = get_creds_for_bucket(py, &run_args.bucket_creds_fetcher, "bucket01".to_string());
+    let _d = get_api_key_for_bucket(py, &run_args.bucket_creds_fetcher, "bucket01".to_string());
 
     let cosmap = parse_cos_map(py, &run_args.cos_map).unwrap();
     dbg!(&cosmap);
@@ -245,8 +251,8 @@ pub fn run_server(py: Python, run_args: &ProxyServerConfig) {
 }
 
 
-fn get_creds_for_bucket(py: Python, callback: &PyObject, bucket: String) -> PyResult<()> {
-    
+fn get_api_key_for_bucket(py: Python, callback: &PyObject, bucket: String) -> PyResult<()> {
+
     match callback.call1(py, (bucket,)) {
         Ok(result) => {
             let content = result.extract::<String>(py)?;

@@ -8,6 +8,14 @@ struct IamResponse {
 }
 
 pub(crate) fn get_bearer(api_key: String) -> Result<String, Box<dyn std::error::Error>> {
+    // todo: 
+    // - check if bearer token is in the cache
+    // - if not, call the callback to get the token and cache the token
+    // - if yes, check if the token is expired
+    // - if expired, renew the token
+    // - if not expired, use the cached token
+
+
     let client = Client::new();
 
     let params = [
