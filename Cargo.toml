@@ -30,7 +30,7 @@ pyo3 = { version = "0.24.1", features = ["extension-module", "serde", "macros"] 
 
 [lib]
 name = "object_storage_proxy"
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib"]
 
 [package.metadata.maturin]
 bindings = "pyo3"

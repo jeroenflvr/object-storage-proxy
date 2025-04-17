@@ -7,8 +7,8 @@ def docreds(bucket):
 
 
 cos_mapping = [
-    ("bucket1", "us-de", 2222, "instance1"),
-    ("bucket2", "us-east-1", 3333, "instance2"),
+    ("bucket1", "us-de", 2222, "instance1", "api_key1"),
+    ("bucket2", "us-east-1", 3333, "instance2", "api_key2"),
 ]
 
 

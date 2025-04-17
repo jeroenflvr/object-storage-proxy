@@ -59,20 +59,23 @@ pub struct CosMapItem {
     pub region: String,
     pub port: u16,
     pub instance: String,
+    pub api_key: String,
 }
+
 
 
 fn parse_cos_map(py: Python, cos_dict: &PyObject) -> PyResult<HashMap<String, CosMapItem>> {
     let mut cos_map: HashMap<String, CosMapItem> = HashMap::new();
-    let cos_tuples: Result<Vec<(String, String, u16, String)>, PyErr> = cos_dict.extract(py);
+    let cos_tuples: Result<Vec<(String, String, u16, String, String)>, PyErr> = cos_dict.extract(py);
 
     match cos_tuples {
         Ok(cos_tuples) => {
-            for (bucket, region, port, instance) in cos_tuples {
+            for (bucket, region, port, instance, api_key) in cos_tuples {
                 let region = region.to_string();
                 let instance = instance.to_string();
                 let port = port;
                 let bucket = bucket.to_string();
+                let api_key = api_key.to_string();
 
                 cos_map.insert(
                     bucket.clone(),
@@ -80,6 +83,7 @@ fn parse_cos_map(py: Python, cos_dict: &PyObject) -> PyResult<HashMap<String, Co
                         region: region.clone(),
                         port,
                         instance: instance.clone(),
+                        api_key: api_key.clone(),
                     },
                 );
                 // println!("Bucket: {}, Region: {}, Port: {}, Instance: {}", bucket, region, port, instance);
