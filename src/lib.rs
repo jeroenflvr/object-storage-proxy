@@ -36,7 +36,7 @@ pub struct ProxyServerConfig {
     pub endpoint: String,
 
     #[pyo3(get, set)]
-    pub bucket_creds_fetcher: Py<PyAny>,
+    pub bucket_creds_fetcher: Option<Py<PyAny>>,
 
     #[pyo3(get, set)]
     pub cos_map: PyObject,
@@ -45,10 +45,10 @@ pub struct ProxyServerConfig {
 #[pymethods]
 impl ProxyServerConfig {
     #[new]
-    pub fn new(endpoint: String, bucket_creds_fetcher: PyObject, cos_map: PyObject) -> Self {
+    pub fn new(endpoint: String, bucket_creds_fetcher: Option<PyObject>, cos_map: PyObject) -> Self {
         ProxyServerConfig {
             endpoint,
-            bucket_creds_fetcher,
+            bucket_creds_fetcher: bucket_creds_fetcher.map(|obj| obj.into()),
             cos_map,
         }
     }
@@ -211,7 +211,15 @@ impl ProxyHttp for MyProxy {
 pub fn run_server(py: Python, run_args: &ProxyServerConfig) {
     dbg!(run_args);
 
-    let _d = get_api_key_for_bucket(py, &run_args.bucket_creds_fetcher, "bucket01".to_string());
+    match run_args.bucket_creds_fetcher {
+        Some(ref fetcher) => {
+            println!("Bucket creds fetcher provided: {:?}", fetcher);
+            let _d = get_api_key_for_bucket(py, fetcher, "bucket01".to_string());
+        }
+        None => {
+            println!("No bucket creds fetcher provided");
+        }
+    }
 
     let cosmap = parse_cos_map(py, &run_args.cos_map).unwrap();
     dbg!(&cosmap);
