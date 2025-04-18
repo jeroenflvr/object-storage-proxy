@@ -16,6 +16,9 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dynamic = ["version"]
+dependencies = [
+    "python-dotenv>=1.1.0",
+]
 
 
 [tool.maturin]
