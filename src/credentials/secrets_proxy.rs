@@ -1,7 +1,11 @@
-use std::{collections::HashMap, sync::{Arc, RwLock}};
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
 
 use reqwest::Client;
 use serde::Deserialize;
+use tracing::{error, info, warn};
 
 #[derive(Clone, Debug)]
 pub struct SecretValue {
@@ -34,7 +38,6 @@ impl SecretValue {
 #[derive(Clone, Debug)]
 pub struct SecretsCache {
     inner: Arc<RwLock<HashMap<String, SecretValue>>>,
-
 }
 
 impl SecretsCache {
@@ -60,11 +63,11 @@ impl SecretsCache {
             let map = self.inner.read().unwrap();
             map.get(key).cloned()
         };
-    
+
         match maybe_secret {
             Some(secret) => {
                 if secret.is_expired() {
-                    println!("Token for {} is expired, renewing ...", key);
+                    info!("Token for {} is expired, renewing ...", key);
                     match bearer_fetcher().await {
                         Ok(iam_response) => {
                             self.insert(
@@ -76,17 +79,17 @@ impl SecretsCache {
                             Some(iam_response.access_token)
                         }
                         Err(e) => {
-                            eprintln!("Failed to renew token for {}: {}", key, e);
+                            error!("Failed to renew token for {}: {}", key, e);
                             None
                         }
                     }
                 } else {
-                    println!("Using cached token for {}", key);
+                    info!("Using cached token for {}", key);
                     Some(secret.get_value().to_string())
                 }
             }
             None => {
-                println!("No cached token found for {}, fetching ...", key);
+                info!("No cached token found for {}, fetching ...", key);
                 match bearer_fetcher().await {
                     Ok(iam_response) => {
                         self.insert(
@@ -94,25 +97,23 @@ impl SecretsCache {
                             iam_response.access_token.clone(),
                             iam_response.expiration,
                         );
-                        println!("Fetched new token for {}", key);
+                        info!("Fetched new token for {}", key);
                         Some(iam_response.access_token)
                     }
                     Err(e) => {
-                        eprintln!("Failed to fetch token for {}: {}", key, e);
+                        error!("Failed to fetch token for {}: {}", key, e);
                         None
                     }
                 }
             }
         }
     }
-    
+
     pub fn invalidate(&self, key: &str) {
         let mut map = self.inner.write().unwrap();
         map.remove(key);
     }
-
 }
-
 
 #[derive(Deserialize, Debug)]
 pub struct IamResponse {
@@ -122,7 +123,7 @@ pub struct IamResponse {
 }
 
 pub(crate) async fn get_bearer(api_key: String) -> Result<IamResponse, Box<dyn std::error::Error>> {
-
+    info!("Fetching bearer token for the API key");
     let client = Client::new();
 
     let params = [
@@ -130,20 +131,23 @@ pub(crate) async fn get_bearer(api_key: String) -> Result<IamResponse, Box<dyn s
         ("apikey", &api_key),
     ];
 
+    // todo: move url to config
     let resp = client
         .post("https://iam.cloud.ibm.com/identity/token")
         .header("Content-Type", "application/x-www-form-urlencoded")
         .form(&params)
-        .send().await?;
+        .send()
+        .await?;
 
     if resp.status().is_success() {
         // println!("Response: {:?}", resp);
         let iam_response: IamResponse = resp.json().await?;
         // println!("Received access token: {:?}", iam_response);
+        info!("Received access token");
         Ok(iam_response)
     } else {
         let err_text = resp.text().await?;
-        eprintln!("Failed to get token: {}", err_text);
+        error!("Failed to get token: {}", err_text);
         Err(format!("Failed to get token: {}", err_text).into())
     }
 }
@@ -155,8 +159,7 @@ mod tests {
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     fn make_response(json_body: &str, status_code: u16) -> ResponseTemplate {
-        ResponseTemplate::new(status_code)
-            .set_body_raw(json_body, "application/json")
+        ResponseTemplate::new(status_code).set_body_raw(json_body, "application/json")
     }
 
     #[tokio::test]
@@ -224,7 +227,10 @@ mod tests {
         );
     }
 
-    async fn get_bearer_with_url(api_key: String, base_url: &str) -> Result<String, Box<dyn std::error::Error>> {
+    async fn get_bearer_with_url(
+        api_key: String,
+        base_url: &str,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let client = reqwest::Client::new();
         let params = [
             ("grant_type", "urn:ibm:params:oauth:grant-type:apikey"),

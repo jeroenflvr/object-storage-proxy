@@ -11,10 +11,7 @@ pub(crate) fn parse_path(input: &str) -> IResult<&str, (&str, &str)> {
     let (_remaining, (_, bucket, rest)) = (
         char('/'),
         take_while1(|c| c != '/'),
-        alt((
-            preceded(char('/'), rest),
-            map(eof, |_| ""),
-        )),
+        alt((preceded(char('/'), rest), map(eof, |_| ""))),
     )
         .parse(input)?;
 

@@ -1,6 +1,7 @@
 from object_storage_proxy import start_server, ProxyServerConfig
 from dotenv import load_dotenv
 import os
+import random
 
 
 load_dotenv()
@@ -11,11 +12,12 @@ def docreds(bucket):
     if not apikey:
         raise ValueError("COS_API_KEY environment variable not set")
     
-    print(f"Fetching credentials for {bucket}")
+    print(f"Fetching credentials for {bucket}...")
     return apikey
 
-def do_validation(headers) -> bool:
-    return True
+def do_validation(token: str, bucket: str) -> bool:
+    print(f"PYTHON: Validating headers: {token} for {bucket}...")
+    return random.choice([True, False])
 
 
 def main():
