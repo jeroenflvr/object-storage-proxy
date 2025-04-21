@@ -1,5 +1,8 @@
 # **Yet Another Object Storage Reverse Proxy**
 
+> 📌 **Note:** This project has been moved to [opensourceworks-org](https://github.com/opensourceworks-org/object-storage-proxy)
+
+
 ## Introduction
 
 ### secrets
